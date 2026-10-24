@@ -66,6 +66,10 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  nix.settings.trusted-users = [ "root" "@wheel" ];
+  security.sudo.wheelNeedsPassword = false;
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   services.tailscale = {
     enable = true;
     openFirewall = true;
