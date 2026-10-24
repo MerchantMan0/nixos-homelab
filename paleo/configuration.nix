@@ -34,17 +34,11 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  services.xserver.enable = true;
+  services.xserver.enable = false;
+  services.displayManager.sddm.enable = false;
+  services.desktopManager.plasma6.enable = false;
 
-  services.displayManager.sddm.enable = true;
-  services.desktopManager.plasma6.enable = true;
-
-  services.xserver.xkb = {
-    layout = "us";
-    variant = "";
-  };
-
-  services.printing.enable = true;
+  console.keyMap = "us";
 
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -59,12 +53,7 @@
     isNormalUser = true;
     description = "paleo";
     extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-      kdePackages.kate
-    ];
   };
-
-  programs.firefox.enable = true;
 
   nixpkgs.config.allowUnfree = true;
 
