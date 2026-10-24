@@ -59,7 +59,39 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 ];
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 5432 ];
+
+  # PostgreSQL primary
+  services.postgresql = {
+    enable = true;
+    package = pkgs.postgresql_17;
+    enableTCPIP = true;
+    settings = {
+      wal_level = "replica";
+      max_wal_senders = 5;
+      max_replication_slots = 5;
+      synchronous_standby_names = "FIRST 1 (enneacraft)";
+      synchronous_commit = "on";
+    };
+    ensureUsers = [
+      { name = "replicator"; ensureClauses.replication = true; }
+    ];
+    # Replication is only reachable over Tailscale (CGNAT range), password required.
+    authentication = pkgs.lib.mkAfter ''
+      host replication replicator 100.64.0.0/10 scram-sha-256
+    '';
+  };
+
+  sops.secrets.pg_replicator_password = {
+    sopsFile = ../secrets/common.yaml;
+    owner = "postgres";
+  };
+  systemd.services.postgresql-setup.environment.PGOPTIONS = "-c synchronous_commit=local";
+  systemd.services.postgresql-setup.script = pkgs.lib.mkAfter ''
+    psql -d postgres -v ON_ERROR_STOP=1 -v pw="$(cat ${config.sops.secrets.pg_replicator_password.path})" <<'SQL'
+      ALTER ROLE replicator PASSWORD :'pw';
+    SQL
+  '';
 
   services.tailscale = {
     enable = true;

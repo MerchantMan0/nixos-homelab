@@ -57,11 +57,43 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  # follower postgres
+  services.postgresql = {
+    enable = true;
+    package = pkgs.postgresql_17;
+    enableTCPIP = true;
+    settings = {
+      hot_standby = true;
+      primary_conninfo = "host=paleo user=replicator application_name=enneacraft passfile=${config.sops.templates."pgpass".path}";
+      primary_slot_name = "enneacraft";
+    };
+  };
+
+  sops.secrets.pg_replicator_password.sopsFile = ../secrets/common.yaml;
+  sops.templates."pgpass" = {
+    content = "paleo:5432:*:replicator:${config.sops.placeholder.pg_replicator_password}\n";
+    owner = "postgres";
+    mode = "0400";
+  };
+
+  systemd.services.postgresql.preStart = pkgs.lib.mkBefore ''
+    if ! test -e ${config.services.postgresql.dataDir}/PG_VERSION; then
+      export PGPASSFILE=${config.sops.templates."pgpass".path}
+      until pg_basebackup \
+        -d "host=paleo user=replicator application_name=enneacraft" \
+        -D ${config.services.postgresql.dataDir} \
+        -X stream -C -S enneacraft; do
+        echo "waiting for paleo primary..."; rm -rf ${config.services.postgresql.dataDir}/*; sleep 5
+      done
+      touch ${config.services.postgresql.dataDir}/standby.signal
+    fi
+  '';
+
   services.tailscale = {
     enable = true;
     openFirewall = true;
   };
-  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 ];
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 5432 ];
 
   # sops-nix test: decrypted at activation to /run/secrets/test_secret
   sops.defaultSopsFile = ../secrets/enneacraft.yaml;
