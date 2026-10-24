@@ -7,9 +7,13 @@
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, deploy-rs, ... }:
+  outputs = { self, nixpkgs, deploy-rs, sops-nix, ... }:
     let
       system = "x86_64-linux";
       # Add a machine here (plus a ./<name>/configuration.nix) and it's deployable.
@@ -19,7 +23,11 @@
     {
       nixosConfigurations = genHosts (name: nixpkgs.lib.nixosSystem {
         inherit system;
-        modules = [ ./${name}/configuration.nix ];
+        modules = [
+          sops-nix.nixosModules.sops
+          ./common/sops.nix
+          ./${name}/configuration.nix
+        ];
       });
 
       # Hostnames resolve via Tailscale MagicDNS; ssh as the wheel user, sudo to root.
@@ -37,7 +45,12 @@
       checks = builtins.mapAttrs (_: lib: lib.deployChecks self.deploy) deploy-rs.lib;
 
       devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
-        packages = [ deploy-rs.packages.${system}.default ];
+        packages = [
+          deploy-rs.packages.${system}.default
+          nixpkgs.legacyPackages.${system}.sops
+          nixpkgs.legacyPackages.${system}.age
+          nixpkgs.legacyPackages.${system}.ssh-to-age
+        ];
       };
     };
 }

@@ -80,6 +80,10 @@
   };
   networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 ];
 
+  # sops-nix test: decrypted at activation to /run/secrets/test_secret
+  sops.defaultSopsFile = ../secrets/enneacraft.yaml;
+  sops.secrets.test_secret = { };
+
   system.stateVersion = "26.05";
 
 }

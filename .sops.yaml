@@ -1,0 +1,17 @@
+keys:
+  # Your personal key: age-keygen -o ~/.config/sops/age/keys.txt  (use the public key it prints)
+  - &admin age1hwelqvq67zpdu4wdfh545ntw6w70vtw9ljpyu6rva0lju8z9ncdsjmy4wk
+  # ssh-keyscan -t ed25519 <host> | ssh-to-age
+  - &paleo age1x0f9kgcsd942aay5ktqqdtenzdmjwweyxeggk7jxfdxn8a5d895qw60hp8
+  - &enneacraft age1afzcs0sdmer44j6g25wckhzlxm7dheyz5ae7jljw25znucze6vdq6h862w
+
+creation_rules:
+  - path_regex: secrets/paleo\.yaml$
+    key_groups:
+      - age: [*admin, *paleo]
+  - path_regex: secrets/enneacraft\.yaml$
+    key_groups:
+      - age: [*admin, *enneacraft]
+  - path_regex: secrets/common\.yaml$
+    key_groups:
+      - age: [*admin, *paleo, *enneacraft]
