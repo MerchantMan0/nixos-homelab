@@ -68,14 +68,8 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  nix.settings.trusted-users = [ "root" "@wheel" ];
-  security.sudo.wheelNeedsPassword = false;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  services.openssh = {
-    enable = true;
-    openFirewall = false;
-  };
   networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 ];
 
   services.tailscale = {

@@ -26,15 +26,15 @@
         modules = [
           sops-nix.nixosModules.sops
           ./common/sops.nix
+          ./common/deploy.nix
           ./${name}/configuration.nix
         ];
       });
 
-      # Hostnames resolve via Tailscale MagicDNS; ssh as the wheel user, sudo to root.
+      # Hostnames resolve using Tailscale MagicDNS.
       deploy.nodes = genHosts (name: {
         hostname = name;
-        sshUser = name;
-        interactiveSudo = false;
+        sshUser = "root";
         confirmTimeout = 120;
         profiles.system = {
           user = "root";
