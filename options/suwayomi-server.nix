@@ -26,6 +26,8 @@ in
       databaseUrl = "postgresql://127.0.0.1:${toString config.services.postgresql.settings.port}/suwayomi";
       databaseUsername = "suwayomi";
       databasePassword = "$SUWAYOMI_DB_PASSWORD";
+      flareSolverrEnabled = true;
+      flareSolverrUrl = "http://127.0.0.1:${toString config.services.flaresolverr.port}";
     };
   };
 
@@ -69,8 +71,8 @@ in
 
   
   systemd.services.suwayomi-server = {
-    requires = [ "mnt-gv0.mount" "postgresql-setup.service" ];
-    after = [ "mnt-gv0.mount" "postgresql-setup.service" ];
+    requires = [ "mnt-gv0.mount" "postgresql-setup.service" "flaresolverr.service" ];
+    after = [ "mnt-gv0.mount" "postgresql-setup.service" "flaresolverr.service" ];
     environment = {
       LD_LIBRARY_PATH = "/run/current-system/sw/share/nix-ld/lib";
       NIX_LD = "/run/current-system/sw/share/nix-ld/lib/ld.so";
