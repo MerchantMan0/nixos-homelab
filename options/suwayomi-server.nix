@@ -62,9 +62,20 @@ in
     config.services.suwayomi-server.settings.server.port
   ];
 
+  programs.nix-ld = {
+    enable = true;
+    libraries = [ pkgs.glib ];
+  };
+
+  
   systemd.services.suwayomi-server = {
     requires = [ "mnt-gv0.mount" "postgresql-setup.service" ];
     after = [ "mnt-gv0.mount" "postgresql-setup.service" ];
+    environment = {
+      LD_LIBRARY_PATH = "/run/current-system/sw/share/nix-ld/lib";
+      NIX_LD = "/run/current-system/sw/share/nix-ld/lib/ld.so";
+      NIX_LD_LIBRARY_PATH = "/run/current-system/sw/share/nix-ld/lib";
+    };
     serviceConfig.EnvironmentFile = config.sops.templates."suwayomi-env".path;
     serviceConfig.ExecStartPre = [
       "+${lib.getExe' pkgs.coreutils "install"} -d -o ${user} -g ${group} -m 0755 ${downloadsPath}"
