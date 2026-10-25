@@ -93,11 +93,26 @@
     enable = true;
     openFirewall = true;
   };
-  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 5432 ];
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 5432 24007 24008 ];
 
   # sops-nix test: decrypted at activation to /run/secrets/test_secret
   sops.defaultSopsFile = ../secrets/enneacraft.yaml;
   sops.secrets.test_secret = { };
+
+  services.glusterfs.enable = true;
+  environment.systemPackages = [ pkgs.glusterfs ];
+  systemd.tmpfiles.rules = [
+    "d /var/lib/glusterfs/bricks/gv0 0755 root root -"
+    "d /mnt/gv0 0755 root root -"
+  ];
+  networking.firewall.interfaces."tailscale0".allowedTCPPortRanges = [
+    { from = 49152; to = 49251; }
+  ];
+  fileSystems."/mnt/gv0" = {
+    device = "localhost:/gv0";
+    fsType = "glusterfs";
+    options = [ "_netdev" "nofail" "x-systemd.automount" "x-systemd.requires=glusterd.service" ];
+  };
 
   system.stateVersion = "26.05";
 

@@ -59,7 +59,7 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 5432 ];
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 5432 24007 24008 ];
 
   # PostgreSQL primary
   services.postgresql = {
@@ -96,6 +96,50 @@
   services.tailscale = {
     enable = true;
     openFirewall = true;
+  };
+
+  services.glusterfs.enable = true;
+  environment.systemPackages = [ pkgs.glusterfs ];
+  systemd.tmpfiles.rules = [
+    "d /var/lib/glusterfs/bricks/gv0 0755 root root -"
+    "d /mnt/gv0 0755 root root -"
+  ];
+  networking.firewall.interfaces."tailscale0".allowedTCPPortRanges = [
+    { from = 49152; to = 49251; }
+  ];
+  fileSystems."/mnt/gv0" = {
+    device = "localhost:/gv0";
+    fsType = "glusterfs";
+    options = [ "_netdev" "nofail" "x-systemd.automount" "x-systemd.requires=glusterd.service" ];
+  };
+ 
+  # bootstrap 
+  systemd.services.gluster-bootstrap = {
+    description = "Bootstrap GlusterFS pool and volume";
+    after = [ "glusterd.service" "tailscaled.service" ];
+    wants = [ "glusterd.service" ];
+    path = [ pkgs.glusterfs pkgs.gnugrep ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      g() { gluster --mode=script "$@"; }
+      notready() { echo "gluster peer not ready yet, will retry: $*"; exit 0; }
+
+      g peer probe enneacraft >/dev/null 2>&1 || notready "peer probe failed"
+      g peer status | grep -q "Peer in Cluster (Connected)" || notready "peer not connected"
+
+      if ! g volume info gv0 >/dev/null 2>&1; then
+        g volume create gv0 replica 2 \
+          paleo:/var/lib/glusterfs/bricks/gv0 enneacraft:/var/lib/glusterfs/bricks/gv0 force
+      fi
+      g volume info gv0 | grep -q "Status: Started" || g volume start gv0
+    '';
+  };
+  systemd.timers.gluster-bootstrap = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnActiveSec = "30s";
+      OnUnitInactiveSec = "1min";
+    };
   };
 
   system.stateVersion = "26.05";
