@@ -27,6 +27,7 @@
           sops-nix.nixosModules.sops
           ./common/sops.nix
           ./common/deploy.nix
+          ./common/base.nix
           ./${name}/configuration.nix
         ];
       });
