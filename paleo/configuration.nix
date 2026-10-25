@@ -6,6 +6,7 @@
       ./hardware-configuration.nix
       ../options/gluster.nix
       ../options/postgresql.nix
+      ../options/flaresolverr.nix
       ../options/suwayomi-server.nix
     ];
 
