@@ -10,6 +10,12 @@
 
   networking.hostName = "enneacraft";
 
+  virtualisation.oci-containers.containers.kokoro = {
+    image = "ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0";
+    extraOptions = [ "--network=host" ];
+  };
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 8880 ];
+
   users.users."enneacraft" = {
     isNormalUser = true;
     description = "enneacraft";
