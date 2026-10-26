@@ -39,9 +39,16 @@ in
     config.services.bookorbit.environment.PORT
   ];
 
+  systemd.tmpfiles.rules = [
+    "z- ${booksPath}/librevox 0755 bookorbit bookorbit - -"
+  ];
+
   systemd.services.bookorbit = {
     requires = [ "mnt-gv0.mount" ];
     after = [ "mnt-gv0.mount" ];
-    serviceConfig.BindReadOnlyPaths = [ booksPath ];
+    serviceConfig = {
+      BindReadOnlyPaths = [ booksPath ];
+      BindPaths = [ "${booksPath}/librevox" ];
+    };
   };
 }
