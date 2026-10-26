@@ -44,6 +44,8 @@
   nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  programs.tmux.enable = true;
+
   services.tailscale = {
     enable = true;
     openFirewall = true;
