@@ -91,10 +91,29 @@ in
   };
 
   
+  systemd.tmpfiles.rules = [
+    "d /tmp/.X11-unix 1777 root root -"
+  ];
+
+  systemd.services.suwayomi-xvfb = {
+    description = "Virtual display for Suwayomi CEF";
+    requiredBy = [ "suwayomi-server.service" ];
+    before = [ "suwayomi-server.service" ];
+    partOf = [ "suwayomi-server.service" ];
+    serviceConfig = {
+      User = user;
+      Group = group;
+      ExecStart = "${lib.getExe' pkgs.xvfb "Xvfb"} :99 -screen 0 1920x1080x24 -nolisten tcp -ac";
+      ExecStartPost = "${lib.getExe pkgs.bash} -c 'for _ in $(${lib.getExe' pkgs.coreutils "seq"} 1 50); do ${lib.getExe' pkgs.coreutils "test"} -S /tmp/.X11-unix/X99 && exit 0; ${lib.getExe' pkgs.coreutils "sleep"} 0.1; done; exit 1'";
+      Restart = "on-failure";
+    };
+  };
+
   systemd.services.suwayomi-server = {
-    requires = [ "mnt-gv0.mount" "postgresql-setup.service" "flaresolverr.service" ];
-    after = [ "mnt-gv0.mount" "postgresql-setup.service" "flaresolverr.service" ];
+    requires = [ "mnt-gv0.mount" "postgresql-setup.service" "flaresolverr.service" "suwayomi-xvfb.service" ];
+    after = [ "mnt-gv0.mount" "postgresql-setup.service" "flaresolverr.service" "suwayomi-xvfb.service" ];
     environment = {
+      DISPLAY = ":99";
       LD_LIBRARY_PATH = "/run/current-system/sw/share/nix-ld/lib";
       NIX_LD = "/run/current-system/sw/share/nix-ld/lib/ld.so";
       NIX_LD_LIBRARY_PATH = "/run/current-system/sw/share/nix-ld/lib";
