@@ -57,6 +57,8 @@ in
         enable = true;
         package = cfg.package;
         enableTCPIP = true;
+        #pg vector is for bookorbit
+        extensions = lib.mkDefault (ps: with ps; [ pgvector ]);
       };
       sops.secrets.${cfg.passwordSecret}.sopsFile = cfg.sopsFile;
     }

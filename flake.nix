@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -13,7 +14,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, deploy-rs, sops-nix, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, deploy-rs, sops-nix, ... }:
     let
       system = "x86_64-linux";
       # Add a machine here (plus a ./<name>/configuration.nix) and it's deployable.
@@ -23,6 +24,7 @@
     {
       nixosConfigurations = genHosts (name: nixpkgs.lib.nixosSystem {
         inherit system;
+        specialArgs = { inherit nixpkgs-unstable; };
         modules = [
           sops-nix.nixosModules.sops
           ./common/sops.nix

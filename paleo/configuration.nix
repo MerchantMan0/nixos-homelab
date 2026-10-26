@@ -8,6 +8,7 @@
       ../options/postgresql.nix
       ../options/flaresolverr.nix
       ../options/suwayomi-server.nix
+      ../options/bookorbit.nix
     ];
 
   networking.hostName = "paleo";
