@@ -1,4 +1,4 @@
-{ config, nixpkgs-unstable, ... }:
+{ config, lib, pkgs, nixpkgs-unstable, ... }:
 
 let
   booksPath = "/mnt/gv0";
@@ -19,6 +19,8 @@ in
       PORT = port;
       APP_URL = "http://paleo:${toString port}";
       LIBRARY_BROWSE_ROOT = booksPath;
+      FFPROBE_PATH = lib.getExe' pkgs.ffmpeg "ffprobe";
+      FFMPEG_PATH = lib.getExe' pkgs.ffmpeg "ffmpeg";
     };
     environmentFile = config.sops.templates."bookorbit-env".path;
   };
