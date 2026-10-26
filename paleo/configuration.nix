@@ -13,6 +13,15 @@
 
   networking.hostName = "paleo";
 
+  fileSystems."/mnt/hdd" = {
+    device = "/dev/disk/by-uuid/77cde92d-a48c-4214-b2d5-6428a6ac01b2";
+    fsType = "ext4";
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /mnt/hdd/bricks/gv0 0755 root root -"
+  ];
+
   users.users."paleo" = {
     isNormalUser = true;
     description = "paleo";
@@ -30,8 +39,8 @@
   # bootstrap
   systemd.services.gluster-bootstrap = {
     description = "Bootstrap GlusterFS pool and volume";
-    after = [ "glusterd.service" "tailscaled.service" ];
-    wants = [ "glusterd.service" ];
+    after = [ "glusterd.service" "tailscaled.service" "mnt-hdd.mount" ];
+    wants = [ "glusterd.service" "mnt-hdd.mount" ];
     path = [ pkgs.glusterfs pkgs.gnugrep ];
     serviceConfig.Type = "oneshot";
     script = ''
@@ -43,7 +52,7 @@
 
       if ! g volume info gv0 >/dev/null 2>&1; then
         g volume create gv0 replica 2 \
-          paleo:/var/lib/glusterfs/bricks/gv0 enneacraft:/var/lib/glusterfs/bricks/gv0 force
+          paleo:/mnt/hdd/bricks/gv0 enneacraft:/var/lib/glusterfs/bricks/gv0 force
       fi
       g volume info gv0 | grep -q "Status: Started" || g volume start gv0
     '';
