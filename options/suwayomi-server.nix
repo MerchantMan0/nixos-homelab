@@ -64,9 +64,30 @@ in
     config.services.suwayomi-server.settings.server.port
   ];
 
+  # patched in libraries (required becuase nixos nixstore)
   programs.nix-ld = {
     enable = true;
-    libraries = [ pkgs.glib ];
+    libraries = with pkgs; [
+      alsa-lib
+      at-spi2-core
+      cairo
+      cups
+      dbus
+      expat
+      glib
+      libgbm
+      libx11
+      libxcb
+      libxcomposite
+      libxdamage
+      libxext
+      libxfixes
+      libxkbcommon
+      libxrandr
+      nspr
+      nss
+      pango
+    ];
   };
 
   
